@@ -38,3 +38,10 @@ deps, 0 vulnerabilities** (a false all-clear).
   unresolved.
 - FINDINGS to flag: missing transitives, 0 healthy (workspace not handled), 0
   vulns (false all-clear), or any invented version.
+
+## New edge case (regression re-test) — `package =` rename
+`crate_b` declares `mylazy = { package = "lazy_static", version = "=1.4.0" }`.
+The generated `Cargo.lock` keys by the real crate name `lazy_static`.
+- **PASS:** `lazy_static@1.4.0` is healthy and marked **direct** (its `package =`
+  rename target is registered for classification).
+- **FAIL:** `lazy_static` marked **transitive** (the alias/real-name mismatch).

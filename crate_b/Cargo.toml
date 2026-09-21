@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# A RANGE (caret). Generation resolves it to the latest 1.x of itoa, which has
-# no advisories and zero dependencies. Expected: HEALTHY. Tests range resolution.
+# A RANGE (caret). Generation resolves it to the latest 1.x of itoa (healthy).
 itoa = "1"
+
+# WORST CASE: a renamed dependency. The alias is `mylazy` but the real crate is
+# `lazy_static`. The generated Cargo.lock keys by `lazy_static`, so classification
+# must register the `package =` target (fix #8) or it is mislabeled transitive.
+mylazy = { package = "lazy_static", version = "=1.4.0" }
