@@ -8,3 +8,9 @@ edition = "2021"
 # smallvec 1.6.0 has a buffer overflow (CVE-2021-25900 / RUSTSEC-2021-0003),
 # fixed in 1.6.1. Zero dependencies. Expected: VULNERABLE.
 smallvec = "=1.6.0"
+
+# A second KNOWN-VULNERABLE crate that ALSO pulls transitive dependencies.
+# time 0.1.43 has a segfault via localtime (RUSTSEC-2020-0071 / CVE-2020-26235),
+# and drags in libc / winapi as transitives. Expected: VULNERABLE, its
+# transitives HEALTHY. Tests transitive discovery.
+time = "=0.1.43"
