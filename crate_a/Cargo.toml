@@ -1,0 +1,10 @@
+[package]
+name = "crate_a"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Exact pin (cargo needs a leading `=`) to a KNOWN-VULNERABLE version.
+# smallvec 1.6.0 has a buffer overflow (CVE-2021-25900 / RUSTSEC-2021-0003),
+# fixed in 1.6.1. Zero dependencies. Expected: VULNERABLE.
+smallvec = "=1.6.0"

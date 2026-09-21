@@ -1,0 +1,8 @@
+# A Cargo WORKSPACE with two member crates in sibling directories. If the
+# resolver copies only THIS file (not crate_a/ and crate_b/), then
+# `cargo generate-lockfile` fails with "failed to load manifest for workspace
+# member" and the whole generation dies. That is the edge the copytree fix
+# handles. No Cargo.lock is committed on purpose.
+[workspace]
+members = ["crate_a", "crate_b"]
+resolver = "2"

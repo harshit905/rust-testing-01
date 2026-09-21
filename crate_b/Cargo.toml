@@ -1,0 +1,9 @@
+[package]
+name = "crate_b"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# A RANGE (caret). Generation resolves it to the latest 1.x of itoa, which has
+# no advisories and zero dependencies. Expected: HEALTHY. Tests range resolution.
+itoa = "1"
