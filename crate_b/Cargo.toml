@@ -11,3 +11,9 @@ itoa = "1"
 # `lazy_static`. The generated Cargo.lock keys by `lazy_static`, so classification
 # must register the `package =` target (fix #8) or it is mislabeled transitive.
 mylazy = { package = "lazy_static", version = "=1.4.0" }
+
+# Round 2: a DEV dependency that is KNOWN-VULNERABLE. Cargo.lock does not record
+# scope, so the scanner must read this table to classify it as DEV.
+# regex 1.5.4 has RUSTSEC-2022-0013 / CVE-2022-24713, fixed 1.5.5.
+[dev-dependencies]
+regex = "=1.5.4"

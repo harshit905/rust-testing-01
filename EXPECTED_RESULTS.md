@@ -8,8 +8,8 @@ must run `cargo generate-lockfile`. Worst-case elements: the workspace itself
 
 | bucket | packages |
 |--------|----------|
-| Vulnerable | `smallvec@1.6.0`, `time@0.1.43` |
-| Healthy | `itoa@1.0.x`, plus `time`'s transitives (`libc`, the `winapi` family, `wasi`) |
+| Vulnerable | `smallvec@1.6.0`, `time@0.1.43`, `generic-array@0.13.2` (workspace-inherited), `nix@0.17.0` (target-specific), `regex@1.5.4` (dev) |
+| Healthy | `itoa@1.0.x`, `lazy_static@1.4.0`, `typenum@1.x`, `aho-corasick@0.7.20`, `memchr@2.x`, `regex-syntax@0.6.29`, `bitflags@1.x`, `cfg-if@0.1.x`, `void@1.0.2`, plus `time`'s transitives (`libc`, the `winapi` family, `wasi`) and possibly `cc` |
 | Unresolved | none |
 
 `crate_a` and `crate_b` are local workspace members (the repo's own code) with no
@@ -45,3 +45,33 @@ The generated `Cargo.lock` keys by the real crate name `lazy_static`.
 - **PASS:** `lazy_static@1.4.0` is healthy and marked **direct** (its `package =`
   rename target is registered for classification).
 - **FAIL:** `lazy_static` marked **transitive** (the alias/real-name mismatch).
+
+## Round 2 edge cases
+
+### A. Workspace-inherited dependency (`generic-array = { workspace = true }`)
+The version `=0.13.2` lives only in the root `[workspace.dependencies]`;
+`crate_a` inherits it. Requires Cargo >= 1.64, so an old resolver toolchain
+fails the WHOLE generation here.
+- **PASS:** `generic-array@0.13.2` vulnerable (`RUSTSEC-2020-0146`, fixed
+  0.13.3), marked **direct**; its transitive `typenum@1.x` healthy.
+- **FAIL:** generic-array marked transitive (the `workspace = true` table
+  entry wasn't registered as direct), or generation fails (old cargo).
+
+### B. Target-specific dependency (`[target.'cfg(unix)'.dependencies] nix = "=0.17.0"`)
+Cargo.lock records target deps for every platform.
+- **PASS:** `nix@0.17.0` vulnerable (`RUSTSEC-2021-0119` / `CVE-2021-45707`,
+  out-of-bounds write in `getgrouplist`, fixed 0.20.2), marked **direct**; its
+  transitives `bitflags`, `cfg-if`, `void`, `libc` (and possibly `cc`) healthy.
+- **FAIL:** nix marked transitive (only plain `[dependencies]` is read) or
+  missing.
+
+### C. Dev dependency (`[dev-dependencies] regex = "=1.5.4"` in `crate_b`)
+Cargo.lock has no scope information; the scanner must read `Cargo.toml`.
+- **PASS:** `regex@1.5.4` vulnerable (`RUSTSEC-2022-0013` / `CVE-2022-24713`
+  ReDoS, fixed 1.5.5), scope **DEV**; its transitives `aho-corasick@0.7.20`,
+  `memchr@2.x`, `regex-syntax@0.6.29` healthy.
+- **FAIL:** regex marked production, or missing.
+
+### Round 2 pass / fail (combined)
+- PASS: 5 vulnerable (smallvec, time, generic-array direct, nix direct, regex
+  DEV); lazy_static direct; all transitives healthy; 0 unresolved.

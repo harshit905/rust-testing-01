@@ -6,3 +6,9 @@
 [workspace]
 members = ["crate_a", "crate_b"]
 resolver = "2"
+
+# Round 2: a workspace-inherited dependency (Cargo >= 1.64). Members declare
+# `generic-array = { workspace = true }`; the version lives ONLY here.
+# generic-array 0.13.2 is vulnerable (RUSTSEC-2020-0146), fixed 0.13.3.
+[workspace.dependencies]
+generic-array = "=0.13.2"

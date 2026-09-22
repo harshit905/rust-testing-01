@@ -14,3 +14,13 @@ smallvec = "=1.6.0"
 # and drags in libc / winapi as transitives. Expected: VULNERABLE, its
 # transitives HEALTHY. Tests transitive discovery.
 time = "=0.1.43"
+
+# Round 2: version inherited from [workspace.dependencies] in the root
+# Cargo.toml. Classification must resolve `workspace = true` to a DIRECT dep.
+generic-array = { workspace = true }
+
+# Round 2: a target-specific dependency table. Cargo.lock records it for every
+# target, so it must be classified DIRECT even though it is not under plain
+# [dependencies]. nix 0.17.0 is vulnerable (RUSTSEC-2021-0119 / CVE-2021-45707).
+[target.'cfg(unix)'.dependencies]
+nix = "=0.17.0"
