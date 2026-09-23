@@ -9,7 +9,7 @@ must run `cargo generate-lockfile`. Worst-case elements: the workspace itself
 | bucket | packages |
 |--------|----------|
 | Vulnerable | `smallvec@1.6.0`, `time@0.1.43`, `generic-array@0.13.2` (workspace-inherited), `nix@0.17.0` (target-specific), `regex@1.5.4` (dev) |
-| Healthy | `itoa@1.0.x`, `lazy_static@1.4.0`, `typenum@1.x`, `aho-corasick@0.7.20`, `memchr@2.x`, `regex-syntax@0.6.29`, `bitflags@1.x`, `cfg-if@0.1.x`, `void@1.0.2`, plus `time`'s transitives (`libc`, the `winapi` family, `wasi`) and possibly `cc` |
+| Healthy | `itoa@1.0.x`, `lazy_static@1.4.0`, `typenum@1.x`, `aho-corasick@0.7.20` (DEV), `memchr@2.x` (DEV), `regex-syntax@0.6.29` (DEV), `bitflags@1.3.2` (PROD, shared), `cfg-if@0.1.x`, `void@1.0.2`, plus `time`'s transitives (`libc`, the `winapi` family, `wasi`) and possibly `cc` |
 | Unresolved | none |
 
 `crate_a` and `crate_b` are local workspace members (the repo's own code) with no
@@ -75,3 +75,18 @@ Cargo.lock has no scope information; the scanner must read `Cargo.toml`.
 ### Round 2 pass / fail (combined)
 - PASS: 5 vulnerable (smallvec, time, generic-array direct, nix direct, regex
   DEV); lazy_static direct; all transitives healthy; 0 unresolved.
+
+## Round 3 edge cases — dev-only transitives
+
+### A. Transitives only `[dev-dependencies]` pull in (`regex 1.5.4`, dev)
+`regex`'s tree (`aho-corasick`, `memchr`, `regex-syntax`) is reachable from no
+production crate.
+- **PASS:** `aho-corasick@0.7.20`, `memchr@2.x`, `regex-syntax@0.6.29` healthy
+  **DEV** transitives (regex itself stays DEV direct).
+- **FAIL:** any of them marked PROD.
+
+### B. A dev-dependency a production crate also reaches (`bitflags =1.3.2`, dev in crate_b)
+`nix` (production, crate_a) depends on `bitflags` too.
+- **PASS:** `bitflags@1.3.2` **PROD** (direct in crate_b's dev table, but a
+  production crate reaches it, and PROD wins across manifests).
+- **FAIL:** `bitflags` marked DEV.
